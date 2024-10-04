@@ -6,12 +6,23 @@ program
     .requiredOption('-i, --input <path>', 'Шлях до вхідного файлу JSON')  // Обов'язковий параметр
     .option('-o, --output <path>', 'Шлях до файлу для збереження результату')  // Необов'язковий
     .option('-d, --display', 'Вивести результат у консоль')  // Необов'язковий
-    .option('-f, --filter', 'Фільтрує результат, та відповідно до інших заданих опцій виконує дію');  // Необов'язковий   
+    .option('-f, --filter', 'Фільтрує введені дані');  // Необов'язковий   
 program.parse(process.argv);
 
 const options = program.opts();
 
-if (!options.input) {
+//CHECK THIS
+program.configureOutput({
+    outputError: (str, write) => {
+        if (str.includes("option '-i, --input <path>' argument missing")) {
+            write("Please, specify input file");
+        } else {
+            write(str);
+        }
+    },
+});
+
+if (options.input == null) {
     console.error("Please, specify input file");
     process.exit(1);
 }
@@ -33,21 +44,26 @@ if (options.filter) {
         process.exit(1);
     }
 
-    const filteredData = parsedData.filter(field => field.value > 5 && field.ku > 13);
+    const filteredData = parsedData.filter(field => field.value > 5 && field.ku == 13);
+    let filteredDataOut = '';
+    for (let i = 0; i < filteredData.length; i++) {
+        filteredDataOut += "\n" + filteredData[i].value
+    }
+
+    //const filteredDataOut = filteredData[0].value;
 
     if (filteredData.length === 0) {
         console.warn("Не знайдено жодного об'єкта, що задовольняє умови фільтрації.");
         process.exit(1);
     }
 
-    const result = JSON.stringify(filteredData, null, 2);
-
+    //const result = JSON.stringify(filteredData, null, 2);
     if (options.display) {
-        console.log("Відфільтровані дані:", result);
+        console.log("Відфільтровані дані:", filteredDataOut);
     }
 
     if (options.output) {
-        fs.writeFileSync(options.output, result, 'utf-8');
+        fs.writeFileSync(options.output, filteredDataOut, 'utf-8');
         console.log(`Фільтровані дані збережено у файл: ${options.output}`);
     }
     process.exit(1);
